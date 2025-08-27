@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/dennis/noji/internal/commands/output"
 	"github.com/spf13/cobra"
 )
 
@@ -101,7 +102,7 @@ func newReviewsPRCmd() *cobra.Command {
 
 			payload := strings.TrimSpace(string(out))
 			if payload == "" {
-				fmt.Fprintln(cmd.OutOrStdout(), "No PRs found.")
+				output.Warnf(output.ModeAuto, "No PRs found.\n")
 				return nil
 			}
 
@@ -162,7 +163,7 @@ func newReviewsPRCmd() *cobra.Command {
 			}
 
 			if len(itemsAny) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No PRs found.")
+				output.Warnf(output.ModeAuto, "No PRs found.\n")
 				return nil
 			}
 
@@ -174,11 +175,11 @@ func newReviewsPRCmd() *cobra.Command {
 				if author == "" {
 					author = "unknown"
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "PR:   #%d\n", it.Number)
-				fmt.Fprintf(cmd.OutOrStdout(), "Title:%s\n", safeOneLine(it.Title))
-				fmt.Fprintf(cmd.OutOrStdout(), "Author: %s\n", author)
-				fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\n", it.CreatedAt)
-				fmt.Fprintf(cmd.OutOrStdout(), "URL:   %s\n\n", it.HTMLURL)
+				output.Infof(output.ModeAuto, "PR:   #%d\n", it.Number)
+				output.Printf(output.ModeAuto, "Title: %s\n", safeOneLine(it.Title))
+				output.Printf(output.ModeAuto, "Author: %s\n", author)
+				output.Printf(output.ModeAuto, "Created: %s\n", it.CreatedAt)
+				output.Printf(output.ModeAuto, "URL:   %s\n\n", it.HTMLURL)
 			}
 			return nil
 		},

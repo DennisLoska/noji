@@ -2,11 +2,11 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 
-	"github.com/spf13/cobra"
+	"github.com/dennis/noji/internal/commands/output"
 	"github.com/dennis/noji/internal/config"
 	"github.com/dennis/noji/internal/opencode"
+	"github.com/spf13/cobra"
 )
 
 func newUseCmd() *cobra.Command {
@@ -26,7 +26,7 @@ func newUseCmd() *cobra.Command {
 			if err := config.SetModel(model); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Selected model: %s\n", model)
+			output.Successf(output.ModeAuto, "Selected model: %s\n", model)
 			return nil
 		},
 	}

@@ -1,8 +1,7 @@
 package commands
 
 import (
-	"fmt"
-
+	"github.com/dennis/noji/internal/commands/output"
 	"github.com/dennis/noji/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +15,7 @@ func newCurrentCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), model)
+			output.Infof(output.ModeAuto, "%s\n", model)
 			return nil
 		},
 	}

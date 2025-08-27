@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"fmt"
-
-	"github.com/spf13/cobra"
+	"github.com/dennis/noji/internal/commands/output"
+	"github.com/dennis/noji/internal/config"
 	"github.com/dennis/noji/internal/opencode"
+	"github.com/spf13/cobra"
 )
 
 func newModelsCmd() *cobra.Command {
@@ -16,8 +16,13 @@ func newModelsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			current, _ := config.GetModel()
 			for _, m := range models {
-				fmt.Fprintln(cmd.OutOrStdout(), m)
+				if m == current && m != "" {
+					output.Successf(output.ModeAuto, "%s\n", m)
+				} else {
+					output.Printf(output.ModeAuto, "%s\n", m)
+				}
 			}
 			return nil
 		},

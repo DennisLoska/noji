@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dennis/noji/internal/commands/output"
 	"github.com/dennis/noji/internal/config"
 	"github.com/dennis/noji/internal/opencode"
 	"github.com/spf13/cobra"
@@ -26,6 +27,8 @@ func newPRCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a PR using opencode",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			output.Infof(output.ModeAuto, "Creating PR with model %s...\n", mustModel())
+			defer output.Successf(output.ModeAuto, "Done.\n")
 			return runPrompt("pr_create.txt")
 		},
 	}
@@ -36,6 +39,8 @@ func newPRUpdateCmd() *cobra.Command {
 		Use:   "update",
 		Short: "Update a PR using opencode",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			output.Infof(output.ModeAuto, "Updating PR with model %s...\n", mustModel())
+			defer output.Successf(output.ModeAuto, "Done.\n")
 			return runPrompt("pr_update.txt")
 		},
 	}
@@ -56,4 +61,12 @@ func runPrompt(promptFile string) error {
 		return fmt.Errorf("read prompt file %s: %w", p, err)
 	}
 	return opencode.RunWithPrompt(model, string(b))
+}
+
+func mustModel() string {
+	m, err := config.GetModel()
+	if err != nil || m == "" {
+		return "<unknown>"
+	}
+	return m
 }

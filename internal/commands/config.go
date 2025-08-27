@@ -1,8 +1,7 @@
 package commands
 
 import (
-	"fmt"
-
+	"github.com/dennis/noji/internal/commands/output"
 	"github.com/dennis/noji/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -22,8 +21,8 @@ func newConfigPathCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "config:", cfg)
-			fmt.Fprintln(cmd.OutOrStdout(), "prompts:", prompts)
+			output.Infof(output.ModeAuto, "config: %s\n", cfg)
+			output.Infof(output.ModeAuto, "prompts: %s\n", prompts)
 			return nil
 		},
 	}
