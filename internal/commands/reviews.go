@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dennis/noji/internal/commands/output"
+	"github.com/dennisloska/noji/internal/commands/output"
 	"github.com/spf13/cobra"
 )
 

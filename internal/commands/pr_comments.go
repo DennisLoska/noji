@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dennis/noji/internal/commands/output"
-	"github.com/dennis/noji/internal/config"
+	"github.com/dennisloska/noji/internal/commands/output"
+	"github.com/dennisloska/noji/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -96,6 +96,7 @@ func newPRCommentsCmd() *cobra.Command {
 			botRe := regexp.MustCompile(`(?i)(\[bot\]$|-bot$|^github-actions(\[bot\])?$|^dependabot(\[bot\])?$|^renovate(\[bot\]|-bot)?$|^snyk(-bot)?$|^mergify(\[bot\])?$|copilot)`)
 
 			// Find PRs authored by me (prefilter: comments>0; optional since)
+			// Important: limit applies to number of PRs processed overall
 			prs, err := listMyPRs(me, repo, state, includeDrafts, limit, since)
 			if err != nil {
 				return err
@@ -326,11 +327,14 @@ func listMyPRs(me, repo, state string, includeDrafts bool, limit int, since stri
 	}
 	q := strings.Join(parts, "+")
 	args := []string{"api", "-X", "GET", fmt.Sprintf("search/issues?q=%s", q)}
-	if limit <= 0 || limit > 100 {
-		args = append(args, "--paginate", "-Fper_page=100")
+	perPage := 0
+	if limit > 0 && limit <= 100 {
+		perPage = limit
 	} else {
-		args = append(args, fmt.Sprintf("-Fper_page=%d", limit))
+		perPage = 100
+		args = append(args, "--paginate")
 	}
+	args = append(args, fmt.Sprintf("-Fper_page=%d", perPage))
 	c := exec.Command("gh", args...)
 	out, err := c.Output()
 	if err != nil {
@@ -340,8 +344,18 @@ func listMyPRs(me, repo, state string, includeDrafts bool, limit int, since stri
 		}
 		return nil, err
 	}
-	// Parse results to collect repo and pr number via URL
-	var res struct {
+	// Parse results robustly to collect items across pagination
+	payload := strings.TrimSpace(string(out))
+	var items []struct {
+		Number      int    `json:"number"`
+		Title       string `json:"title"`
+		HTMLURL     string `json:"html_url"`
+		PullRequest struct {
+			URL string `json:"url"`
+		} `json:"pull_request"`
+	}
+	// Try full decode first
+	var single struct {
 		Items []struct {
 			Number      int    `json:"number"`
 			Title       string `json:"title"`
@@ -351,9 +365,35 @@ func listMyPRs(me, repo, state string, includeDrafts bool, limit int, since stri
 			} `json:"pull_request"`
 		} `json:"items"`
 	}
-	_ = json.Unmarshal(out, &res)
+	if err := json.Unmarshal([]byte(payload), &single); err == nil && len(single.Items) > 0 {
+		items = append(items, single.Items...)
+	} else {
+		for _, chunk := range strings.Split(payload, "\n") {
+			chunk = strings.TrimSpace(chunk)
+			if chunk == "" {
+				continue
+			}
+			var part struct {
+				Items []struct {
+					Number      int    `json:"number"`
+					Title       string `json:"title"`
+					HTMLURL     string `json:"html_url"`
+					PullRequest struct {
+						URL string `json:"url"`
+					} `json:"pull_request"`
+				} `json:"items"`
+			}
+			if err := json.Unmarshal([]byte(chunk), &part); err == nil {
+				items = append(items, part.Items...)
+			}
+		}
+	}
+	// Apply hard slice to respect limit if specified
+	if limit > 0 && len(items) > limit {
+		items = items[:limit]
+	}
 	var prs []ghPR
-	for _, it := range res.Items {
+	for _, it := range items {
 		prs = append(prs, ghPR{Number: it.Number, Title: it.Title, HTMLURL: it.HTMLURL, User: struct {
 			Login string `json:"login"`
 		}{Login: me}, State: state})
