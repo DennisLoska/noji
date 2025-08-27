@@ -79,10 +79,12 @@ func newPRCommentsCmd() *cobra.Command {
 	var excludeBots bool
 	var includeDrafts bool
 	var limit int
+	var since string
+	var doClassify bool
 
 	cmd := &cobra.Command{
 		Use:   "comments",
-		Short: "List your PRs with human comments and classify priority",
+		Short: "List your PRs with human comments (optional severity classification)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Who am I
 			me, err := whoAmI()
@@ -91,8 +93,8 @@ func newPRCommentsCmd() *cobra.Command {
 			}
 			botRe := regexp.MustCompile(`(?i)(\\[bot\\]|-bot$|bot$|^github-actions\\[bot\\]$|^dependabot\\[bot\\]$|^renovate(\\[bot\\]|-bot)?$|^snyk(-bot)?$|^mergify\\[bot\\]$)`)
 
-			// Find PRs authored by me
-			prs, err := listMyPRs(me, repo, state, includeDrafts, limit)
+			// Find PRs authored by me (prefilter: comments>0; optional since)
+			prs, err := listMyPRs(me, repo, state, includeDrafts, limit, since)
 			if err != nil {
 				return err
 			}
@@ -107,7 +109,16 @@ func newPRCommentsCmd() *cobra.Command {
 				if err != nil {
 					continue
 				}
-				// Fetch comments
+				// Fast probes: check for human comments with per_page=1
+				hasHuman, err := hasHumanComments(repoFull, pr.Number, botRe)
+				if err != nil {
+					return err
+				}
+				if !hasHuman && excludeBots {
+					// Skip heavy fetch, no human activity
+					continue
+				}
+				// Fetch full comments only when necessary
 				issues, err := fetchIssueComments(repoFull, pr.Number)
 				if err != nil {
 					return err
@@ -152,14 +163,17 @@ func newPRCommentsCmd() *cobra.Command {
 					})
 					idToIndex[rc.ID] = len(cc) - 1
 				}
-				// Classify severity per comment using opencode
-				model, _ := config.GetModel()
-				for i := range cc {
-					sev, _ := classifyComment(model, cc[i].Body)
-					cc[i].Severity = sev
+				// Optionally classify severity per comment using opencode
+				priority := "none"
+				if doClassify {
+					model, _ := config.GetModel()
+					for i := range cc {
+						sev, _ := classifyComment(model, cc[i].Body)
+						cc[i].Severity = sev
+					}
+					// Compute PR priority: highest severity among comments
+					priority = derivePriority(cc)
 				}
-				// Compute PR priority: highest severity among comments
-				priority := derivePriority(cc)
 				// Sort comments by time
 				sort.Slice(cc, func(i, j int) bool { return cc[i].CreatedAt < cc[j].CreatedAt })
 				results = append(results, prWithComments{
@@ -184,7 +198,9 @@ func newPRCommentsCmd() *cobra.Command {
 				output.Infof(output.ModeAuto, "PR: #%d %s\n", r.Number, r.Title)
 				output.Printf(output.ModeAuto, "Repo: %s\n", r.Repo)
 				output.Printf(output.ModeAuto, "URL:  %s\n", r.URL)
-				output.Printf(output.ModeAuto, "Priority: %s\n", r.Priority)
+				if doClassify {
+					output.Printf(output.ModeAuto, "Priority: %s\n", r.Priority)
+				}
 				if len(r.Comments) == 0 {
 					output.Warnf(output.ModeAuto, "  (no human comments)\n\n")
 					continue
@@ -199,7 +215,11 @@ func newPRCommentsCmd() *cobra.Command {
 					if c.Kind == "review" && c.ParentID != 0 {
 						indent = "    ↳ "
 					}
-					line := fmt.Sprintf("%s- [%s] @%s: %s", indent, c.Severity, c.Author, oneLiner(c.Body))
+					sev := c.Severity
+					if !doClassify || sev == "" {
+						sev = "-"
+					}
+					line := fmt.Sprintf("%s- [%s] @%s: %s", indent, sev, c.Author, oneLiner(c.Body))
 					if c.Path != "" {
 						line += fmt.Sprintf(" (%s)", c.Path)
 					}
@@ -217,6 +237,8 @@ func newPRCommentsCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&excludeBots, "no-bots", true, "Exclude bot comments")
 	cmd.Flags().BoolVar(&includeDrafts, "drafts", true, "Include draft PRs")
 	cmd.Flags().IntVar(&limit, "limit", 0, "Limit number of PRs (0=all)")
+	cmd.Flags().StringVar(&since, "since", "", "Only PRs updated on/after YYYY-MM-DD")
+	cmd.Flags().BoolVar(&doClassify, "classify", false, "Classify comment severity and derive PR priority (uses opencode)")
 	return cmd
 }
 
@@ -248,7 +270,7 @@ func whoAmI() (string, error) {
 	return u.Login, nil
 }
 
-func listMyPRs(me, repo, state string, includeDrafts bool, limit int) ([]ghPR, error) {
+func listMyPRs(me, repo, state string, includeDrafts bool, limit int, since string) ([]ghPR, error) {
 	// Use search/issues to find PRs authored by me
 	parts := []string{"is:pr", fmt.Sprintf("author:%s", me)}
 	if state == "" {
@@ -264,6 +286,12 @@ func listMyPRs(me, repo, state string, includeDrafts bool, limit int) ([]ghPR, e
 	}
 	if !includeDrafts {
 		parts = append(parts, "-is:draft")
+	}
+	// Performance prefilter: only PRs with any comments
+	parts = append(parts, "comments:>0")
+	// Optional updated since
+	if strings.TrimSpace(since) != "" {
+		parts = append(parts, fmt.Sprintf("updated:>=%s", since))
 	}
 	q := strings.Join(parts, "+")
 	args := []string{"api", "-X", "GET", fmt.Sprintf("search/issues?q=%s", q)}
@@ -313,6 +341,35 @@ func repoFromPRURL(url string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("cannot parse repo from url: %s", url)
+}
+
+func hasHumanComments(repo string, prNumber int, botRe *regexp.Regexp) (bool, error) {
+	// Probe latest issue comment
+	path1 := fmt.Sprintf("repos/%s/issues/%d/comments?per_page=1", repo, prNumber)
+	c1 := exec.Command("gh", "api", path1)
+	b1, err1 := c1.Output()
+	if err1 == nil {
+		var one []ghIssueComment
+		if json.Unmarshal(b1, &one) == nil && len(one) > 0 {
+			if !botRe.MatchString(one[0].User.Login) {
+				return true, nil
+			}
+		}
+	}
+	// Probe latest review comment
+	path2 := fmt.Sprintf("repos/%s/pulls/%d/comments?per_page=1", repo, prNumber)
+	c2 := exec.Command("gh", "api", path2)
+	b2, err2 := c2.Output()
+	if err2 == nil {
+		var one []ghReviewComment
+		if json.Unmarshal(b2, &one) == nil && len(one) > 0 {
+			if !botRe.MatchString(one[0].User.Login) {
+				return true, nil
+			}
+		}
+	}
+	// If both failed or only bots observed
+	return false, nil
 }
 
 func fetchIssueComments(repo string, prNumber int) ([]ghIssueComment, error) {

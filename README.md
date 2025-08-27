@@ -46,6 +46,23 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
       noji pr reviews --json
       noji pr reviews --bots --limit 20
       ```
+  - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
+    - Flags:
+      - `--repo OWNER/REPO` limit to a repo
+      - `--state open|closed|all` PR state (default open)
+      - `--drafts` include draft PRs (default true)
+      - `--no-bots` exclude bot comments (default true)
+      - `--limit <n>` limit number of PRs (0=all)
+      - `--since YYYY-MM-DD` only PRs updated on/after date
+      - `--json` output JSON
+      - `--classify` enable opencode-based severity classification and derived Priority
+    - Examples:
+      ```sh
+      noji pr comments
+      noji pr comments --repo owner/repo --state open --no-bots --limit 20
+      noji pr comments --since 2025-07-28 --json
+      noji pr comments --classify
+      ```
 
 - Tickets
   - `noji ticket update` – craft an update for your tracker ticket
