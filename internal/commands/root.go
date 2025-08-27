@@ -13,6 +13,7 @@ import (
 func NewRoot() *cobra.Command {
 	var colorFlag string
 	var editorFlag string
+	var versionFlag bool
 
 	rootCmd := &cobra.Command{
 		Use:   "noji",
@@ -35,6 +36,15 @@ func NewRoot() *cobra.Command {
 				os.Setenv("NOJI_EDITOR_OVERRIDE", editorFlag)
 			}
 
+			// Handle global version flag early and exit
+			if versionFlag {
+				// print short version like v0.1.0
+				v := mustShortVersion()
+				fmt.Fprintln(cmd.OutOrStdout(), v)
+				// prevent command RunE from executing
+				return cobra.ErrSubCommandRequired
+			}
+
 			// Optional: add hidden flag to show paths when verbose/debugging
 			_ = cfg
 			_ = prompts
@@ -51,6 +61,7 @@ func NewRoot() *cobra.Command {
 
 	rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "auto", "color output: auto|always|never")
 	rootCmd.PersistentFlags().StringVar(&editorFlag, "editor", "", "preferred editor binary or command (overrides config)")
+	rootCmd.PersistentFlags().BoolVarP(&versionFlag, "version", "v", false, "print version and exit")
 	rootCmd.PersistentFlags().Lookup("color").NoOptDefVal = "auto"
 	rootCmd.RegisterFlagCompletionFunc("color", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"auto", "always", "never"}, cobra.ShellCompDirectiveNoFileComp

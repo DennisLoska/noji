@@ -11,6 +11,5 @@ func BuildRoot() *cobra.Command {
 	root.AddCommand(newTicketCmd())
 	root.AddCommand(newConfigCmd())
 	root.AddCommand(newCurrentCmd())
-	root.AddCommand(newVersionCmd())
 	return root
 }
