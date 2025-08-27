@@ -54,7 +54,7 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 
 	// Seed prompt files from repository templates if missing (never overwrite)
 	repoBase := "prompts"
-	templates := []string{"pr_create.txt", "pr_update.txt", "ticket_update.txt"}
+	templates := []string{"pr_create.txt", "pr_update.txt", "ticket_update.txt", "ticket_edit.txt"}
 	for _, name := range templates {
 		userPath := filepath.Join(prompts, name)
 		if _, err := os.Stat(userPath); errors.Is(err, os.ErrNotExist) {
