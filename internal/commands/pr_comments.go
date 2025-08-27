@@ -81,6 +81,7 @@ func newPRCommentsCmd() *cobra.Command {
 	var limit int
 	var since string
 	var doClassify bool
+	var renderMD bool
 
 	cmd := &cobra.Command{
 		Use:   "comments",
@@ -230,10 +231,17 @@ func newPRCommentsCmd() *cobra.Command {
 						header += fmt.Sprintf(" (%s)", c.Path)
 					}
 					output.Printf(output.ModeAuto, "%s\n", header)
-					// body on its own line, trimmed to one line for compactness
-					body := oneLiner(c.Body)
-					if body != "" {
-						output.Printf(output.ModeAuto, "%s  %s\n", indent, body)
+					// body on its own line; render as markdown to ANSI
+					if strings.TrimSpace(c.Body) != "" {
+						var rendered string
+						if renderMD {
+							rendered = output.RenderMarkdown(c.Body)
+						} else {
+							rendered = oneLiner(c.Body)
+						}
+						for _, line := range strings.Split(strings.TrimRight(rendered, "\n"), "\n") {
+							output.Printf(output.ModeAuto, "%s  %s\n", indent, line)
+						}
 					}
 				}
 				output.Printf(output.ModeAuto, "\n")
@@ -250,6 +258,7 @@ func newPRCommentsCmd() *cobra.Command {
 	cmd.Flags().IntVar(&limit, "limit", 0, "Limit number of PRs (0=all)")
 	cmd.Flags().StringVar(&since, "since", "", "Only PRs updated on/after YYYY-MM-DD")
 	cmd.Flags().BoolVar(&doClassify, "classify", false, "Classify comment severity and derive PR priority (uses opencode)")
+	cmd.Flags().BoolVar(&renderMD, "md", true, "Render comment bodies as Markdown to ANSI (requires a compatible terminal)")
 	return cmd
 }
 

@@ -32,15 +32,14 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
       noji pr update
       ```
    - `noji pr reviews` – list open PRs where your review is requested (uses gh)
-     - Flags:
-       - `--org <org>` filter by GitHub organization
-       - `--limit <n>` limit number of results (0=all)
-       - `--json` output raw JSON
-       - `--infer-orgs` infer orgs (default true when --org not provided)
-       - `--no-bots` exclude PRs from bot authors (default true)
-       - `--bots` only PRs from bot authors (overrides --no-bots)
-       - `--links auto|always|never` control clickable hyperlink output (default auto)
-     - Examples:
+      - Flags:
+        - `--org <org>` filter by GitHub organization
+        - `--limit <n>` limit number of results (0=all)
+        - `--json` output raw JSON
+        - `--infer-orgs` infer orgs (default true when --org not provided)
+        - `--no-bots` exclude PRs from bot authors (default true)
+        - `--bots` only PRs from bot authors (overrides --no-bots)
+      - Examples:
        ```sh
        noji pr reviews
        noji pr reviews --org your-org --limit 5
@@ -48,18 +47,18 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
        noji pr reviews --bots --limit 20
        ```
    - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
-     - Flags:
-       - `--repo OWNER/REPO` limit to a repo
-       - `--state open|closed|all` PR state (default open)
-       - `--drafts` include draft PRs (default true)
-       - `--no-bots` exclude bot comments (default true)
-       - `--limit <n>` limit number of PRs (0=all)
-       - `--since YYYY-MM-DD` only PRs updated on/after date
-       - `--json` output JSON
-       - `--classify` enable opencode-based severity classification and derived Priority
-       - `--links auto|always|never` control clickable hyperlink output (default auto)
-     - Notes:
-       - Output shows only the raw PR URL line (no separate "Open PR" clickable line). Individual comment arrows (↗) remain clickable when links are enabled.
+      - Flags:
+        - `--repo OWNER/REPO` limit to a repo
+        - `--state open|closed|all` PR state (default open)
+        - `--drafts` include draft PRs (default true)
+        - `--no-bots` exclude bot comments (default true)
+        - `--limit <n>` limit number of PRs (0=all)
+        - `--since YYYY-MM-DD` only PRs updated on/after date
+        - `--json` output JSON
+        - `--classify` enable opencode-based severity classification and derived Priority
+        - `--md` render comment bodies as Markdown to ANSI (default true)
+      - Notes:
+        - Output shows only the raw PR URL line; no per-comment URLs. Markdown rendering uses a compact glamour theme.
      - Examples:
        ```sh
        noji pr comments
