@@ -91,7 +91,7 @@ func newPRCommentsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			botRe := regexp.MustCompile(`(?i)(\\[bot\\]|-bot$|bot$|^github-actions\\[bot\\]$|^dependabot\\[bot\\]$|^renovate(\\[bot\\]|-bot)?$|^snyk(-bot)?$|^mergify\\[bot\\]$)`)
+			botRe := regexp.MustCompile(`(?i)(\[bot\]$|-bot$|^github-actions(\[bot\])?$|^dependabot(\[bot\])?$|^renovate(\[bot\]|-bot)?$|^snyk(-bot)?$|^mergify(\[bot\])?$|copilot)`)
 
 			// Find PRs authored by me (prefilter: comments>0; optional since)
 			prs, err := listMyPRs(me, repo, state, includeDrafts, limit, since)
@@ -219,7 +219,11 @@ func newPRCommentsCmd() *cobra.Command {
 					if !doClassify || sev == "" {
 						sev = "-"
 					}
-					line := fmt.Sprintf("%s- [%s] @%s: %s", indent, sev, c.Author, oneLiner(c.Body))
+					author := c.Author
+					if output.AuthorColorEnabled() {
+						author = output.ColorizeAuthor(author)
+					}
+					line := fmt.Sprintf("%s- [%s] @%s: %s", indent, sev, author, oneLiner(c.Body))
 					if c.Path != "" {
 						line += fmt.Sprintf(" (%s)", c.Path)
 					}
