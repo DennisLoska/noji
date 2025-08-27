@@ -55,7 +55,7 @@ func newReviewsPRCmd() *cobra.Command {
 		Aliases: []string{"r"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// compile bot login regex once per invocation
-			botRe := regexp.MustCompile(`(?i)(\[bot\]|-bot$|bot$|^github-actions\[bot\]$|^dependabot\[bot\]$|^renovate(\[bot\]|-bot)?$|^snyk(-bot)?$|^mergify\[bot\]$)`)
+			botRe := regexp.MustCompile(`(?i)(\[bot\]|-bot$|bot$|^github-actions(\[bot\])?$|^dependabot(\[bot\])?$|^renovate(\[bot\]|-bot)?$|^snyk(-bot)?$|^mergify(\[bot\])?$|copilot)`)
 			// Build search query
 			queryParts := []string{"is:open", "is:pr", "archived:false"}
 			// Always limit to PRs requesting my review
@@ -175,9 +175,14 @@ func newReviewsPRCmd() *cobra.Command {
 				if author == "" {
 					author = "unknown"
 				}
+				// plain output
+				authorLabel := author
+				if output.AuthorColorEnabled() {
+					authorLabel = output.ColorizeAuthor(authorLabel)
+				}
 				output.Infof(output.ModeAuto, "PR:   #%d\n", it.Number)
 				output.Printf(output.ModeAuto, "Title: %s\n", safeOneLine(it.Title))
-				output.Printf(output.ModeAuto, "Author: %s\n", author)
+				output.Printf(output.ModeAuto, "Author: %s\n", authorLabel)
 				output.Printf(output.ModeAuto, "Created: %s\n", it.CreatedAt)
 				output.Printf(output.ModeAuto, "URL:   %s\n\n", it.HTMLURL)
 			}

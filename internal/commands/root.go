@@ -27,6 +27,7 @@ func NewRoot() *cobra.Command {
 				return err
 			}
 			output.Init(mode)
+
 			// Optional: add hidden flag to show paths when verbose/debugging
 			_ = cfg
 			_ = prompts

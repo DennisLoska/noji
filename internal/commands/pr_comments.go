@@ -197,6 +197,7 @@ func newPRCommentsCmd() *cobra.Command {
 			for _, r := range results {
 				output.Infof(output.ModeAuto, "PR: #%d %s\n", r.Number, r.Title)
 				output.Printf(output.ModeAuto, "Repo: %s\n", r.Repo)
+				// Raw PR URL only (no clickable label line)
 				output.Printf(output.ModeAuto, "URL:  %s\n", r.URL)
 				if doClassify {
 					output.Printf(output.ModeAuto, "Priority: %s\n", r.Priority)
@@ -227,6 +228,7 @@ func newPRCommentsCmd() *cobra.Command {
 					if c.Path != "" {
 						line += fmt.Sprintf(" (%s)", c.Path)
 					}
+					// no per-comment URL link output per Option A
 					output.Printf(output.ModeAuto, "%s\n", line)
 				}
 				output.Printf(output.ModeAuto, "\n")
