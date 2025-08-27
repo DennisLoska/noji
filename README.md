@@ -2,20 +2,64 @@
 
 A CLI to automate developer workflow tasks like creating/updating PRs and updating ticket status, powered by opencode prompts.
 
-## Features
+## Commands and examples
 
-- PR workflows
-  - `noji pr create` – guide model to draft a new PR description
-  - `noji pr update` – update the current PR description
-- Ticket workflows
-  - `noji ticket update` – craft an update for your tracker ticket
-- Model management
+- General
+  - `noji --help`
+  - `noji current` – print the currently selected model
+
+- Models
   - `noji models` – list available opencode models
+    - Example:
+      ```sh
+      noji models
+      ```
   - `noji use <model>` – select and persist a default model
-- Config visibility
-  - `noji config path` – show config and prompts locations
-- Reviews
+    - Example:
+      ```sh
+      noji use github-copilot/gpt-5
+      ```
+
+- Pull requests
+  - `noji pr create` – create a PR description using your prompt template
+    - Examples:
+      ```sh
+      noji pr create
+      ```
+  - `noji pr update` – update the current PR description
+    - Examples:
+      ```sh
+      noji pr update
+      ```
   - `noji pr reviews` – list open PRs where your review is requested (uses gh)
+    - Flags:
+      - `--org <org>` filter by GitHub organization
+      - `--limit <n>` limit number of results (0=all)
+      - `--json` output raw JSON
+      - `--infer-orgs` infer orgs (default true when --org not provided)
+      - `--no-bots` exclude PRs from bot authors (default true)
+      - `--bots` only PRs from bot authors (overrides --no-bots)
+    - Examples:
+      ```sh
+      noji pr reviews
+      noji pr reviews --org your-org --limit 5
+      noji pr reviews --json
+      noji pr reviews --bots --limit 20
+      ```
+
+- Tickets
+  - `noji ticket update` – craft an update for your tracker ticket
+    - Example:
+      ```sh
+      noji ticket update
+      ```
+
+- Config
+  - `noji config path` – show config and prompts locations
+    - Example:
+      ```sh
+      noji config path
+      ```
 
 ## Installation
 
@@ -32,30 +76,30 @@ Or with go (installs to $GOBIN or $GOPATH/bin):
 go install ./cmd/noji
 ```
 
-Requirement: opencode CLI must be installed and available on PATH.
+Requirements: opencode CLI and GitHub CLI (gh) must be installed and available on PATH.
 
 ## Quick start
 
 ```sh
 # show config paths and ensure first-run setup
-./bin/noji config path
+noji config path
 
 # list models and pick one
-./bin/noji models
-./bin/noji use github-copilot/gpt-5
+noji models
+noji use github-copilot/gpt-5
 
 # create a PR description using your prompt template text
-./bin/noji pr create
+noji pr create
 
 # update PR description later
-./bin/noji pr update
+noji pr update
 
 # update your ticket using the ticket prompt
-./bin/noji ticket update
+noji ticket update
 
 # see PRs with reviews requested from you
-./bin/noji pr reviews
-./bin/noji pr reviews --org your-org --limit 5
+noji pr reviews
+noji pr reviews --org your-org --limit 5
 ```
 
 ## Configuration
@@ -90,6 +134,8 @@ noji use <model>
 noji models
 ```
 
+The PR commands use the local git history and your prompt templates to draft or update the PR description.
+
 ## Environment variables
 
 - `NOJI_CONFIG_HOME` – overrides the base config directory. Example:
@@ -122,10 +168,7 @@ Common tasks:
 make build
 
 # run the local binary
-./bin/noji --help
-
-# lint (if you add linters in the future)
-# make lint
+noji --help
 ```
 
 ## Roadmap ideas
