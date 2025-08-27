@@ -10,18 +10,25 @@ import (
 )
 
 const (
-	appDirName   = "noji"
-	configName   = "config"
-	configType   = "yaml"
-	keyModel     = "model"
-	promptsDir   = "prompts"
+	appDirName = "noji"
+	configName = "config"
+	configType = "yaml"
+	keyModel   = "model"
+	promptsDir = "prompts"
 )
 
-// EnsureConfig sets up ~/.config/noji, default config, and placeholder prompts.
+// EnsureConfig sets up config dir, default config, and placeholder prompts.
+// Resolution order:
+// 1) If NOJI_CONFIG_HOME is set, use $NOJI_CONFIG_HOME/noji
+// 2) Else use os.UserConfigDir()/noji (platform-correct; honors XDG_CONFIG_HOME)
 func EnsureConfig() (configPath string, promptsPath string, err error) {
-	configHome, err := os.UserConfigDir()
-	if err != nil {
-		return "", "", fmt.Errorf("get user config dir: %w", err)
+	configHome := os.Getenv("NOJI_CONFIG_HOME")
+	if configHome == "" {
+		var derr error
+		configHome, derr = os.UserConfigDir()
+		if derr != nil {
+			return "", "", fmt.Errorf("get user config dir: %w", derr)
+		}
 	}
 	appDir := filepath.Join(configHome, appDirName)
 	prompts := filepath.Join(appDir, promptsDir)
@@ -44,8 +51,8 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 
 	// Ensure placeholder prompt files exist
 	placeholders := map[string]string{
-		"pr_create.txt":  "Placeholder prompt for PR create",
-		"pr_update.txt":  "Placeholder prompt for PR update",
+		"pr_create.txt":     "Placeholder prompt for PR create",
+		"pr_update.txt":     "Placeholder prompt for PR update",
 		"ticket_update.txt": "Placeholder prompt for ticket update",
 	}
 	for name, content := range placeholders {
@@ -58,14 +65,29 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 	return cfgFile, prompts, nil
 }
 
+// resolveAppDir returns the app directory respecting NOJI_CONFIG_HOME override.
+func resolveAppDir() (string, error) {
+	configHome := os.Getenv("NOJI_CONFIG_HOME")
+	if configHome == "" {
+		var err error
+		configHome, err = os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+	}
+	return filepath.Join(configHome, appDirName), nil
+}
+
 // GetModel reads the selected model from config.
 func GetModel() (string, error) {
 	if _, _, err := EnsureConfig(); err != nil {
 		return "", err
 	}
 	v := viper.New()
-	configHome, _ := os.UserConfigDir()
-	appDir := filepath.Join(configHome, appDirName)
+	appDir, err := resolveAppDir()
+	if err != nil {
+		return "", err
+	}
 	v.SetConfigName(configName)
 	v.SetConfigType(configType)
 	v.AddConfigPath(appDir)
@@ -81,8 +103,10 @@ func SetModel(model string) error {
 		return err
 	}
 	v := viper.New()
-	configHome, _ := os.UserConfigDir()
-	appDir := filepath.Join(configHome, appDirName)
+	appDir, err := resolveAppDir()
+	if err != nil {
+		return err
+	}
 	v.SetConfigName(configName)
 	v.SetConfigType(configType)
 	v.AddConfigPath(appDir)

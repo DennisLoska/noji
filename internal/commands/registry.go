@@ -9,5 +9,6 @@ func BuildRoot() *cobra.Command {
 	root.AddCommand(newUseCmd())
 	root.AddCommand(newPRCmd())
 	root.AddCommand(newTicketCmd())
+	root.AddCommand(newConfigCmd())
 	return root
 }
