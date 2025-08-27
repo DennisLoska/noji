@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/dennis/noji/internal/config"
 	"github.com/dennis/noji/internal/opencode"
+	"github.com/spf13/cobra"
 )
 
 func newPRCmd() *cobra.Command {
@@ -17,6 +17,7 @@ func newPRCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newPRCreateCmd())
 	cmd.AddCommand(newPRUpdateCmd())
+	cmd.AddCommand(newReviewsPRCmd())
 	return cmd
 }
 
