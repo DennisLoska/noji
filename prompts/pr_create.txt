@@ -1,0 +1,15 @@
+Use gh cli to generate a PR description for the current branch.
+The PR title is required to be in this format: feat(): title of the PR
+The PR title assumes that  is a jira ticket id i.e FOO-999
+The PR body should have the following sections: Summary, Description, Next steps
+Include a link to the jira ticket in the summary section. The branch name should be the ticket id in most cases.
+Use the current git diff against the  to provide context.
+Use the codebase to provide additional context for information
+Include at least one, but not more well formatted code snippets in the PR description as highlight.
+
+The  is usually main or master. Use this command to find out against which parent to create the pull request:
+
+( git merge-base --fork-point origin/main HEAD >/dev/null 2>&1 && echo main ) || ( git merge-base --fork-point origin/master HEAD >/dev/null 2>&1 && echo master ) || ( git merge-base --is-ancestor origin/main HEAD && echo main ) || ( git merge-base --is-ancestor origin/master HEAD && echo master ) || echo unknown
+
+Create the PR and then use the open command to open it.
+

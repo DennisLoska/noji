@@ -1,0 +1,15 @@
+Use the available atlassian MCP server (not the web) to update the context of the jira ticket .
+The  should be the name of the current git branch name.
+Use  the gh cli to fetch the latest information from the PR related to the current branch name.
+
+The following information is relevant:
+The PR body description
+Comments from other humans (not bots like SonarCube etc.)
+
+Aggregate all the information and create a summary.
+Update the ticket on jira with a comment containing that summary.
+Do not modify the existing jira ticket description at all.
+Only add a single comment to the ticket, that is all.
+
+Once you are done use the open command to open the ticket in the browser.
+

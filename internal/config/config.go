@@ -49,16 +49,19 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 		}
 	}
 
-	// Ensure placeholder prompt files exist
-	placeholders := map[string]string{
-		"pr_create.txt":     "Placeholder prompt for PR create",
-		"pr_update.txt":     "Placeholder prompt for PR update",
-		"ticket_update.txt": "Placeholder prompt for ticket update",
-	}
-	for name, content := range placeholders {
-		p := filepath.Join(prompts, name)
-		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-			_ = os.WriteFile(p, []byte(content+"\n"), 0o644)
+	// Seed prompt files from repository templates if missing (never overwrite)
+	repoBase := "prompts"
+	templates := []string{"pr_create.txt", "pr_update.txt", "ticket_update.txt"}
+	for _, name := range templates {
+		userPath := filepath.Join(prompts, name)
+		if _, err := os.Stat(userPath); errors.Is(err, os.ErrNotExist) {
+			repoPath := filepath.Join(repoBase, name)
+			if b, rerr := os.ReadFile(repoPath); rerr == nil {
+				_ = os.WriteFile(userPath, b, 0o644)
+			} else {
+				// Fallback to empty file if repo template missing
+				_ = os.WriteFile(userPath, []byte(""), 0o644)
+			}
 		}
 	}
 
