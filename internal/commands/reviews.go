@@ -133,20 +133,12 @@ func newReviewsPRCmd() *cobra.Command {
 				if it.User != nil && it.User.Login != "" {
 					author = it.User.Login
 				}
-				requester := ""
-				if it.Assignee != nil && it.Assignee.Login != "" {
-					requester = it.Assignee.Login
-				}
 				if author == "" {
 					author = "unknown"
-				}
-				if requester == "" {
-					requester = "@me"
 				}
 				fmt.Fprintf(cmd.OutOrStdout(), "PR:   #%d\n", it.Number)
 				fmt.Fprintf(cmd.OutOrStdout(), "Title:%s\n", safeOneLine(it.Title))
 				fmt.Fprintf(cmd.OutOrStdout(), "Author: %s\n", author)
-				fmt.Fprintf(cmd.OutOrStdout(), "Requested reviewer: %s\n", requester)
 				fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\n", it.CreatedAt)
 				fmt.Fprintf(cmd.OutOrStdout(), "URL:   %s\n\n", it.HTMLURL)
 			}
