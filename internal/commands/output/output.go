@@ -25,6 +25,7 @@ var (
 	cSuccess = color.New(color.FgGreen, color.Bold)
 	cWarn    = color.New(color.FgYellow, color.Bold)
 	cError   = color.New(color.FgRed, color.Bold)
+	cAuthor  = color.New(color.FgHiBlue, color.Bold)
 
 	currentMode = ModeAuto
 )
@@ -92,6 +93,15 @@ func Errorf(_ Mode, format string, a ...any) {
 
 func Printf(_ Mode, format string, a ...any) {
 	printWith(stdout, color.New(), format, a...)
+}
+
+// Author color helpers
+func AuthorColorEnabled() bool { return colorEnabledFor(currentMode, stdout) }
+func ColorizeAuthor(name string) string {
+	if !AuthorColorEnabled() {
+		return name
+	}
+	return cAuthor.Sprintf("%s", name)
 }
 
 func printWith(w *os.File, c *color.Color, format string, a ...any) {

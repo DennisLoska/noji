@@ -31,21 +31,41 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
       ```sh
       noji pr update
       ```
-  - `noji pr reviews` – list open PRs where your review is requested (uses gh)
-    - Flags:
-      - `--org <org>` filter by GitHub organization
-      - `--limit <n>` limit number of results (0=all)
-      - `--json` output raw JSON
-      - `--infer-orgs` infer orgs (default true when --org not provided)
-      - `--no-bots` exclude PRs from bot authors (default true)
-      - `--bots` only PRs from bot authors (overrides --no-bots)
-    - Examples:
-      ```sh
-      noji pr reviews
-      noji pr reviews --org your-org --limit 5
-      noji pr reviews --json
-      noji pr reviews --bots --limit 20
-      ```
+   - `noji pr reviews` – list open PRs where your review is requested (uses gh)
+      - Flags:
+        - `--org <org>` filter by GitHub organization
+        - `--limit <n>` limit number of results (0=all)
+        - `--json` output raw JSON
+        - `--infer-orgs` infer orgs (default true when --org not provided)
+        - `--no-bots` exclude PRs from bot authors (default true)
+        - `--bots` only PRs from bot authors (overrides --no-bots)
+      - Examples:
+       ```sh
+       noji pr reviews
+       noji pr reviews --org your-org --limit 5
+       noji pr reviews --json
+       noji pr reviews --bots --limit 20
+       ```
+   - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
+      - Flags:
+        - `--repo OWNER/REPO` limit to a repo
+        - `--state open|closed|all` PR state (default open)
+        - `--drafts` include draft PRs (default true)
+        - `--no-bots` exclude bot comments (default true)
+        - `--limit <n>` limit number of PRs (0=all)
+        - `--since YYYY-MM-DD` only PRs updated on/after date
+        - `--json` output JSON
+        - `--classify` enable opencode-based severity classification and derived Priority
+        - `--md` render comment bodies as Markdown to ANSI (default true)
+      - Notes:
+        - Output shows only the raw PR URL line; no per-comment URLs. Markdown rendering uses a compact glamour theme.
+     - Examples:
+       ```sh
+       noji pr comments
+       noji pr comments --repo owner/repo --state open --no-bots --limit 20
+       noji pr comments --since 2025-07-28 --json
+       noji pr comments --classify
+       ```
 
 - Tickets
   - `noji ticket update` – craft an update for your tracker ticket
