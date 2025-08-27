@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -44,14 +45,20 @@ func newReviewsPRCmd() *cobra.Command {
 	var limit int
 	var outputJSON bool
 	var inferOrgs bool
+	var noBots bool
+	var botsOnly bool
 
 	cmd := &cobra.Command{
 		Use:     "reviews",
 		Short:   "List open PRs where reviews are requested from you",
 		Aliases: []string{"r"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// compile bot login regex once per invocation
+			botRe := regexp.MustCompile(`(?i)(\[bot\]|-bot$|bot$|^github-actions\[bot\]$|^dependabot\[bot\]$|^renovate(\[bot\]|-bot)?$|^snyk(-bot)?$|^mergify\[bot\]$)`)
 			// Build search query
-			queryParts := []string{"is:open", "is:pr", "review-requested:@me", "archived:false"}
+			queryParts := []string{"is:open", "is:pr", "archived:false"}
+			// Always limit to PRs requesting my review
+			queryParts = append(queryParts, "review-requested:@me")
 			if org != "" {
 				queryParts = append(queryParts, fmt.Sprintf("org:%s", org))
 			} else if inferOrgs {
@@ -68,7 +75,19 @@ func newReviewsPRCmd() *cobra.Command {
 			// Base command
 			// Use gh api exactly as: gh api -X GET 'search/issues?q=is:open+is:pr+review-requested:@me+archived:false' --paginate
 			apiURL := fmt.Sprintf("search/issues?q=%s", query)
-			ghArgs := []string{"api", "-X", "GET", apiURL, "--paginate"}
+			// Optimize API usage: if a small limit is requested, avoid full pagination
+			ghArgs := []string{"api", "-X", "GET", apiURL}
+			perPage := 0
+			if limit > 0 && limit <= 100 {
+				perPage = limit
+			} else if limit == 0 || limit > 100 {
+				// Use high per_page to reduce round-trips when paginating
+				perPage = 100
+				ghArgs = append(ghArgs, "--paginate")
+			}
+			if perPage > 0 {
+				ghArgs = append(ghArgs, fmt.Sprintf("-Fper_page=%d", perPage))
+			}
 
 			c := exec.Command("gh", ghArgs...)
 			out, err := c.Output()
@@ -87,25 +106,44 @@ func newReviewsPRCmd() *cobra.Command {
 			}
 
 			// gh --paginate returns concatenated JSON documents separated by newlines.
+			// However, when search results fit in one page, gh returns a single JSON object
+			// possibly followed by a trailing newline and then another JSON object with only
+			// the 'incomplete_results' and 'total_count' fields. We'll parse robustly by
+			// attempting to decode the entire payload first; if that fails, fall back to
+			// splitting by newlines and decoding each chunk that looks like a JSON object.
 			var merged ghSearchIssuesResponse
-			for _, chunk := range strings.Split(payload, "\n") {
-				if strings.TrimSpace(chunk) == "" {
-					continue
+			// Try whole-payload decode first
+			if err := json.Unmarshal([]byte(payload), &merged); err != nil {
+				// Fallback: line-delimited JSON documents
+				merged = ghSearchIssuesResponse{}
+				for _, chunk := range strings.Split(payload, "\n") {
+					chunk = strings.TrimSpace(chunk)
+					if chunk == "" {
+						continue
+					}
+					var r ghSearchIssuesResponse
+					if err := json.Unmarshal([]byte(chunk), &r); err != nil {
+						// ignore non-matching chunks (like {"incomplete_results":...})
+						continue
+					}
+					merged.Items = append(merged.Items, r.Items...)
 				}
-				var r ghSearchIssuesResponse
-				if err := json.Unmarshal([]byte(chunk), &r); err != nil {
-					return fmt.Errorf("parse gh api response: %w", err)
-				}
-				merged.Items = append(merged.Items, r.Items...)
 			}
 
-			// Filter to ensure only PRs where @me is requested as reviewer.
-			// The search query already includes review-requested:@me, but keep this guard.
+			// Filter author by bot vs human according to flags. The query already
+			// limits to PRs requesting my review.
 			items := merged.Items
 			filtered := make([]ghIssueItem, 0, len(items))
 			for _, it := range items {
-				// If an assignee is set and is not @me, skip it
-				if it.Assignee != nil && it.Assignee.Login != "" && it.Assignee.Login != "@me" {
+				author := ""
+				if it.User != nil {
+					author = it.User.Login
+				}
+				isBot := botRe.MatchString(author)
+				if botsOnly && !isBot {
+					continue
+				}
+				if !botsOnly && noBots && isBot {
 					continue
 				}
 				filtered = append(filtered, it)
@@ -150,6 +188,8 @@ func newReviewsPRCmd() *cobra.Command {
 	cmd.Flags().IntVar(&limit, "limit", 0, "Limit number of results (0=all)")
 	cmd.Flags().BoolVar(&outputJSON, "json", false, "Output raw JSON")
 	cmd.Flags().BoolVar(&inferOrgs, "infer-orgs", true, "Infer your org memberships if --org not provided")
+	cmd.Flags().BoolVar(&noBots, "no-bots", true, "Exclude PRs from bot authors")
+	cmd.Flags().BoolVar(&botsOnly, "bots", false, "Show only PRs from bot authors (overrides --no-bots)")
 	return cmd
 }
 
