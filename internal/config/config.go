@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -14,6 +15,7 @@ const (
 	configName = "config"
 	configType = "yaml"
 	keyModel   = "model"
+	keyEditor  = "editor"
 	promptsDir = "prompts"
 )
 
@@ -40,7 +42,8 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 	v.SetConfigName(configName)
 	v.SetConfigType(configType)
 	v.AddConfigPath(appDir)
-	v.SetDefault(keyModel, "github-copilot/gpt-5")
+	v.SetDefault(keyModel, "github-copilot/gpt-4.1")
+	v.SetDefault(keyEditor, "vim")
 
 	cfgFile := filepath.Join(appDir, configName+"."+configType)
 	if _, statErr := os.Stat(cfgFile); errors.Is(statErr, os.ErrNotExist) {
@@ -100,6 +103,29 @@ func GetModel() (string, error) {
 	return v.GetString(keyModel), nil
 }
 
+// GetEditor reads the preferred editor from config (defaults to vim).
+func GetEditor() (string, error) {
+	if _, _, err := EnsureConfig(); err != nil {
+		return "", err
+	}
+	v := viper.New()
+	appDir, err := resolveAppDir()
+	if err != nil {
+		return "", err
+	}
+	v.SetConfigName(configName)
+	v.SetConfigType(configType)
+	v.AddConfigPath(appDir)
+	if err := v.ReadInConfig(); err != nil {
+		return "", err
+	}
+	ed := v.GetString(keyEditor)
+	if strings.TrimSpace(ed) == "" {
+		return "vim", nil
+	}
+	return ed, nil
+}
+
 // SetModel writes the selected model to config.
 func SetModel(model string) error {
 	if _, _, err := EnsureConfig(); err != nil {
@@ -117,6 +143,26 @@ func SetModel(model string) error {
 		return err
 	}
 	v.Set(keyModel, model)
+	return v.WriteConfig()
+}
+
+// SetEditor writes the preferred editor to config.
+func SetEditor(editor string) error {
+	if _, _, err := EnsureConfig(); err != nil {
+		return err
+	}
+	v := viper.New()
+	appDir, err := resolveAppDir()
+	if err != nil {
+		return err
+	}
+	v.SetConfigName(configName)
+	v.SetConfigType(configType)
+	v.AddConfigPath(appDir)
+	if err := v.ReadInConfig(); err != nil {
+		return err
+	}
+	v.Set(keyEditor, editor)
 	return v.WriteConfig()
 }
 

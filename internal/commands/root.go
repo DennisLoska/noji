@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/dennis/noji/internal/commands/output"
@@ -11,6 +12,7 @@ import (
 
 func NewRoot() *cobra.Command {
 	var colorFlag string
+	var editorFlag string
 
 	rootCmd := &cobra.Command{
 		Use:   "noji",
@@ -28,6 +30,11 @@ func NewRoot() *cobra.Command {
 			}
 			output.Init(mode)
 
+			// If --editor is provided, persist override for this process via env
+			if strings.TrimSpace(editorFlag) != "" {
+				os.Setenv("NOJI_EDITOR_OVERRIDE", editorFlag)
+			}
+
 			// Optional: add hidden flag to show paths when verbose/debugging
 			_ = cfg
 			_ = prompts
@@ -36,6 +43,7 @@ func NewRoot() *cobra.Command {
 	}
 
 	rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "auto", "color output: auto|always|never")
+	rootCmd.PersistentFlags().StringVar(&editorFlag, "editor", "", "preferred editor binary or command (overrides config)")
 	rootCmd.PersistentFlags().Lookup("color").NoOptDefVal = "auto"
 	rootCmd.RegisterFlagCompletionFunc("color", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"auto", "always", "never"}, cobra.ShellCompDirectiveNoFileComp
