@@ -14,6 +14,8 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
   - `noji use <model>` – select and persist a default model
 - Config visibility
   - `noji config path` – show config and prompts locations
+- Reviews
+  - `noji pr reviews` – list open PRs where your review is requested (uses gh)
 
 ## Installation
 
@@ -50,6 +52,10 @@ Requirement: opencode CLI must be installed and available on PATH.
 
 # update your ticket using the ticket prompt
 ./bin/noji ticket update
+
+# see PRs with reviews requested from you
+./bin/noji pr reviews
+./bin/noji pr reviews --org your-org --limit 5
 ```
 
 ## Configuration
