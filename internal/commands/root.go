@@ -41,8 +41,8 @@ func NewRoot() *cobra.Command {
 				// print short version like v0.1.0
 				v := mustShortVersion()
 				fmt.Fprintln(cmd.OutOrStdout(), v)
-				// prevent command RunE from executing
-				return cobra.ErrSubCommandRequired
+				// return a sentinel error that signals early exit without printing help
+				return fmt.Errorf("__noji_exit__")
 			}
 
 			// Optional: add hidden flag to show paths when verbose/debugging
@@ -55,7 +55,11 @@ func NewRoot() *cobra.Command {
 	// Ensure that running plain `noji` executes PersistentPreRunE (seeding config/prompts)
 	// and then shows help to preserve UX.
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		// Print help and return nil to indicate success
+		// If version flag was handled in PersistentPreRunE, exit quietly
+		if versionFlag {
+			return fmt.Errorf("__noji_exit__")
+		}
+		// Otherwise show help
 		return cmd.Help()
 	}
 
