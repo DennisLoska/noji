@@ -32,7 +32,7 @@ Or with go (installs to $GOBIN or $GOPATH/bin):
 go install ./cmd/noji
 ```
 
-Requirement: opencode CLI must be installed and available on PATH.
+Requirements: opencode CLI and GitHub CLI (gh) must be installed and available on PATH.
 
 ## Quick start
 
@@ -87,8 +87,16 @@ noji use <model>
 - Discover models:
 
 ```sh
-noji models
+# create a PR description using your prompt template text
+./bin/noji pr create
+
+# update PR description later
+./bin/noji pr update
 ```
+
+This updates the currently open PR for the checked-out branch, reusing the `prompts/pr_update.txt` template.
+
+The command uses the local git history and the `prompts/pr_create.txt` template to draft a PR description. It will open an editor to review before submission.
 
 ## Environment variables
 
