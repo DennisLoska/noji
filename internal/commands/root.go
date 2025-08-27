@@ -42,6 +42,13 @@ func NewRoot() *cobra.Command {
 		},
 	}
 
+	// Ensure that running plain `noji` executes PersistentPreRunE (seeding config/prompts)
+	// and then shows help to preserve UX.
+	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		// Print help and return nil to indicate success
+		return cmd.Help()
+	}
+
 	rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "auto", "color output: auto|always|never")
 	rootCmd.PersistentFlags().StringVar(&editorFlag, "editor", "", "preferred editor binary or command (overrides config)")
 	rootCmd.PersistentFlags().Lookup("color").NoOptDefVal = "auto"

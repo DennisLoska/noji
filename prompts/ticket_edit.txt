@@ -1,0 +1,10 @@
+Use the Atlassian MCP server (not the web) to fetch the Jira issue’s Description field for the provided ticket key.
+
+Inputs:
+- Ticket key: Provided as a CLI argument to the tool (e.g., FOO-123)
+
+Requirements:
+- Retrieve the issue’s Description field exactly as stored.
+- OUTPUT ONLY the raw Description content to stdout.
+- Do NOT summarize, rephrase, format, wrap, prepend, or append anything.
+- If the Description is empty, output nothing (empty string).
