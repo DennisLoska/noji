@@ -10,24 +10,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type ghIssueItem struct {
+	Number        int    `json:"number"`
+	Title         string `json:"title"`
+	HTMLURL       string `json:"html_url"`
+	RepositoryURL string `json:"repository_url"`
+	CreatedAt     string `json:"created_at"`
+	Assignee      *struct {
+		Login string `json:"login"`
+	} `json:"assignee"`
+	User *struct {
+		Login string `json:"login"`
+	} `json:"user"`
+}
+
 type ghSearchIssuesResponse struct {
-	Items []struct {
-		Number        int    `json:"number"`
-		Title         string `json:"title"`
-		HTMLURL       string `json:"html_url"`
-		RepositoryURL string `json:"repository_url"`
-		CreatedAt     string `json:"created_at"`
-		Assignee      *struct {
-			Login string `json:"login"`
-		} `json:"assignee"`
-		User *struct {
-			Login string `json:"login"`
-		} `json:"user"`
-	} `json:"items"`
+	Items []ghIssueItem `json:"items"`
 }
 
 type ghOrg struct {
 	Login string `json:"login"`
+}
+
+func safeOneLine(s string) string {
+	// collapse newlines and excessive spaces for cleaner single-line fields
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	return strings.TrimSpace(s)
 }
 
 func newReviewsPRCmd() *cobra.Command {
@@ -90,36 +99,56 @@ func newReviewsPRCmd() *cobra.Command {
 				merged.Items = append(merged.Items, r.Items...)
 			}
 
-			// Apply limit if specified
+			// Filter to ensure only PRs where @me is requested as reviewer.
+			// The search query already includes review-requested:@me, but keep this guard.
 			items := merged.Items
-			if limit > 0 && limit < len(items) {
-				items = items[:limit]
+			filtered := make([]ghIssueItem, 0, len(items))
+			for _, it := range items {
+				// If an assignee is set and is not @me, skip it
+				if it.Assignee != nil && it.Assignee.Login != "" && it.Assignee.Login != "@me" {
+					continue
+				}
+				filtered = append(filtered, it)
+			}
+			itemsAny := filtered
+
+			// Apply limit if specified
+			if limit > 0 && limit < len(itemsAny) {
+				itemsAny = itemsAny[:limit]
 			}
 
 			if outputJSON {
 				enc := json.NewEncoder(cmd.OutOrStdout())
 				enc.SetIndent("", "  ")
-				return enc.Encode(items)
+				return enc.Encode(itemsAny)
 			}
 
-			if len(items) == 0 {
+			if len(itemsAny) == 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "No PRs found.")
 				return nil
 			}
 
-			for _, it := range items {
-				repo := strings.TrimPrefix(it.RepositoryURL, "https://api.github.com/repos/")
+			for _, it := range itemsAny {
+				author := ""
+				if it.User != nil && it.User.Login != "" {
+					author = it.User.Login
+				}
 				requester := ""
 				if it.Assignee != nil && it.Assignee.Login != "" {
 					requester = it.Assignee.Login
-				} else if it.User != nil {
-					requester = it.User.Login
+				}
+				if author == "" {
+					author = "unknown"
 				}
 				if requester == "" {
-					requester = "unknown"
+					requester = "@me"
 				}
-				// Print: requester, title, created_at
-				fmt.Fprintf(cmd.OutOrStdout(), "%s | %s | %s | %s#%d | %s\n", requester, it.Title, it.CreatedAt, repo, it.Number, it.HTMLURL)
+				fmt.Fprintf(cmd.OutOrStdout(), "PR:   #%d\n", it.Number)
+				fmt.Fprintf(cmd.OutOrStdout(), "Title:%s\n", safeOneLine(it.Title))
+				fmt.Fprintf(cmd.OutOrStdout(), "Author: %s\n", author)
+				fmt.Fprintf(cmd.OutOrStdout(), "Requested reviewer: %s\n", requester)
+				fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\n", it.CreatedAt)
+				fmt.Fprintf(cmd.OutOrStdout(), "URL:   %s\n\n", it.HTMLURL)
 			}
 			return nil
 		},
