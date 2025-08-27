@@ -48,6 +48,7 @@ func newReviewsPRCmd() *cobra.Command {
 	var inferOrgs bool
 	var noBots bool
 	var botsOnly bool
+	var urlsOnly bool
 
 	cmd := &cobra.Command{
 		Use:     "reviews",
@@ -162,6 +163,15 @@ func newReviewsPRCmd() *cobra.Command {
 				return enc.Encode(itemsAny)
 			}
 
+			if urlsOnly {
+				for _, it := range itemsAny {
+					if strings.TrimSpace(it.HTMLURL) != "" {
+						output.Printf(output.ModeNever, "%s\n", it.HTMLURL)
+					}
+				}
+				return nil
+			}
+
 			if len(itemsAny) == 0 {
 				output.Warnf(output.ModeAuto, "No PRs found.\n")
 				return nil
@@ -196,6 +206,7 @@ func newReviewsPRCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&inferOrgs, "infer-orgs", true, "Infer your org memberships if --org not provided")
 	cmd.Flags().BoolVar(&noBots, "no-bots", true, "Exclude PRs from bot authors")
 	cmd.Flags().BoolVar(&botsOnly, "bots", false, "Show only PRs from bot authors (overrides --no-bots)")
+	cmd.Flags().BoolVar(&urlsOnly, "urls", false, "Print only PR URLs (one per line)")
 	return cmd
 }
 

@@ -82,6 +82,7 @@ func newPRCommentsCmd() *cobra.Command {
 	var since string
 	var doClassify bool
 	var renderMD bool
+	var urlsOnly bool
 
 	cmd := &cobra.Command{
 		Use:   "comments",
@@ -194,6 +195,15 @@ func newPRCommentsCmd() *cobra.Command {
 				return enc.Encode(results)
 			}
 
+			if urlsOnly {
+				for _, r := range results {
+					if strings.TrimSpace(r.URL) != "" {
+						output.Printf(output.ModeNever, "%s\n", r.URL)
+					}
+				}
+				return nil
+			}
+
 			// Human output
 			for _, r := range results {
 				output.Infof(output.ModeAuto, "PR: #%d %s\n", r.Number, r.Title)
@@ -259,6 +269,7 @@ func newPRCommentsCmd() *cobra.Command {
 	cmd.Flags().StringVar(&since, "since", "", "Only PRs updated on/after YYYY-MM-DD")
 	cmd.Flags().BoolVar(&doClassify, "classify", false, "Classify comment severity and derive PR priority (uses opencode)")
 	cmd.Flags().BoolVar(&renderMD, "md", true, "Render comment bodies as Markdown to ANSI (requires a compatible terminal)")
+	cmd.Flags().BoolVar(&urlsOnly, "urls", false, "Print only PR URLs (one per line)")
 	return cmd
 }
 
