@@ -224,12 +224,17 @@ func newPRCommentsCmd() *cobra.Command {
 					if output.AuthorColorEnabled() {
 						author = output.ColorizeAuthor(author)
 					}
-					line := fmt.Sprintf("%s- [%s] @%s: %s", indent, sev, author, oneLiner(c.Body))
+					// header line with severity and author
+					header := fmt.Sprintf("%s- [%s] @%s", indent, sev, author)
 					if c.Path != "" {
-						line += fmt.Sprintf(" (%s)", c.Path)
+						header += fmt.Sprintf(" (%s)", c.Path)
 					}
-					// no per-comment URL link output per Option A
-					output.Printf(output.ModeAuto, "%s\n", line)
+					output.Printf(output.ModeAuto, "%s\n", header)
+					// body on its own line, trimmed to one line for compactness
+					body := oneLiner(c.Body)
+					if body != "" {
+						output.Printf(output.ModeAuto, "%s  %s\n", indent, body)
+					}
 				}
 				output.Printf(output.ModeAuto, "\n")
 			}
