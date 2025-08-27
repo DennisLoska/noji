@@ -16,9 +16,11 @@ func NewRoot() *cobra.Command {
 	var versionFlag bool
 
 	rootCmd := &cobra.Command{
-		Use:   "noji",
-		Short: "Noji - NO JIRA!!!1!!!",
-		Long:  "Noji is a CLI wrapper around opencode for PRs and tickets.",
+		Use:           "noji",
+		Short:         "Noji - NO JIRA!!!1!!!",
+		Long:          "Noji is a CLI wrapper around opencode for PRs and tickets.",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			cfg, prompts, err := config.EnsureConfig()
 			if err != nil {
@@ -38,11 +40,10 @@ func NewRoot() *cobra.Command {
 
 			// Handle global version flag early and exit
 			if versionFlag {
-				// print short version like v0.1.0
+				// print short version like v0.1.0 and exit immediately
 				v := mustShortVersion()
 				fmt.Fprintln(cmd.OutOrStdout(), v)
-				// return a sentinel error that signals early exit without printing help
-				return fmt.Errorf("__noji_exit__")
+				os.Exit(0)
 			}
 
 			// Optional: add hidden flag to show paths when verbose/debugging
