@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/dennis/noji/internal/commands/output"
 )
 
 // ListModels runs `opencode models` and returns the list.
@@ -34,11 +36,43 @@ func ListModels() ([]string, error) {
 }
 
 // RunWithPrompt runs: opencode run -m <model> "<prompt>"
-func RunWithPrompt(model string, prompt string) error {
+func RunWithPrompt(model string, prompt string, markdown bool) error {
 	args := []string{"run", "-m", model, prompt}
 	cmd := exec.Command("opencode", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	return cmd.Run()
+
+	if markdown {
+		// Capture output for markdown rendering
+		var stdoutBuf, stderrBuf bytes.Buffer
+		cmd.Stdout = &stdoutBuf
+		cmd.Stderr = &stderrBuf
+		cmd.Stdin = os.Stdin
+
+		err := cmd.Run()
+		if err != nil {
+			// Still output stderr even on error
+			if stderrBuf.Len() > 0 {
+				os.Stderr.Write(stderrBuf.Bytes())
+			}
+			return err
+		}
+
+		// Render stdout as markdown and output
+		if stdoutBuf.Len() > 0 {
+			rendered := output.RenderMarkdown(stdoutBuf.String())
+			os.Stdout.WriteString(rendered)
+		}
+
+		// Output stderr as-is
+		if stderrBuf.Len() > 0 {
+			os.Stderr.Write(stderrBuf.Bytes())
+		}
+
+		return nil
+	} else {
+		// Normal output mode
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		return cmd.Run()
+	}
 }

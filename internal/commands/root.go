@@ -9,8 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	markdownEnabled bool
+)
+
 func NewRoot() *cobra.Command {
 	var colorFlag string
+	var markdownFlag bool
 
 	rootCmd := &cobra.Command{
 		Use:   "noji",
@@ -28,6 +33,9 @@ func NewRoot() *cobra.Command {
 			}
 			output.Init(mode)
 
+			// store markdown flag value
+			markdownEnabled = markdownFlag
+
 			// Optional: add hidden flag to show paths when verbose/debugging
 			_ = cfg
 			_ = prompts
@@ -40,6 +48,9 @@ func NewRoot() *cobra.Command {
 	rootCmd.RegisterFlagCompletionFunc("color", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"auto", "always", "never"}, cobra.ShellCompDirectiveNoFileComp
 	})
+
+	rootCmd.PersistentFlags().BoolVar(&markdownFlag, "markdown", false, "format output as markdown")
+	rootCmd.PersistentFlags().Lookup("markdown").NoOptDefVal = "false"
 
 	return rootCmd
 }

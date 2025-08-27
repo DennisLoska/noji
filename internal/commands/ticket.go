@@ -18,7 +18,7 @@ func newTicketUpdateCmd() *cobra.Command {
 		Use:   "update",
 		Short: "Update a ticket using opencode",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPrompt("ticket_update.txt")
+			return runPrompt("ticket_update.txt", markdownEnabled)
 		},
 	}
 }

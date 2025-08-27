@@ -30,7 +30,7 @@ func newPRCreateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output.Infof(output.ModeAuto, "Creating PR with model %s...\n", mustModel())
 			defer output.Successf(output.ModeAuto, "Done.\n")
-			return runPrompt("pr_create.txt")
+			return runPrompt("pr_create.txt", markdownEnabled)
 		},
 	}
 }
@@ -42,12 +42,12 @@ func newPRUpdateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output.Infof(output.ModeAuto, "Updating PR with model %s...\n", mustModel())
 			defer output.Successf(output.ModeAuto, "Done.\n")
-			return runPrompt("pr_update.txt")
+			return runPrompt("pr_update.txt", markdownEnabled)
 		},
 	}
 }
 
-func runPrompt(promptFile string) error {
+func runPrompt(promptFile string, markdown bool) error {
 	model, err := config.GetModel()
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func runPrompt(promptFile string) error {
 	if err != nil {
 		return fmt.Errorf("read prompt file %s: %w", p, err)
 	}
-	return opencode.RunWithPrompt(model, string(b))
+	return opencode.RunWithPrompt(model, string(b), markdown)
 }
 
 func mustModel() string {
