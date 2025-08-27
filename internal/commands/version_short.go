@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/dennis/noji/internal/version"
+	"github.com/dennisloska/noji/internal/version"
 )
 
 func mustShortVersion() string {

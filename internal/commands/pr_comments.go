@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dennis/noji/internal/commands/output"
-	"github.com/dennis/noji/internal/config"
+	"github.com/dennisloska/noji/internal/commands/output"
+	"github.com/dennisloska/noji/internal/config"
 	"github.com/spf13/cobra"
 )
 
