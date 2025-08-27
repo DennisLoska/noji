@@ -52,17 +52,38 @@ func EnsureConfig() (configPath string, promptsPath string, err error) {
 		}
 	}
 
-	// Seed prompt files from repository templates if missing (never overwrite)
+	// Seed prompt files from repository templates if missing or empty (never overwrite non-empty)
 	repoBase := "prompts"
-	templates := []string{"pr_create.txt", "pr_update.txt", "ticket_update.txt", "ticket_edit.txt"}
-	for _, name := range templates {
-		userPath := filepath.Join(prompts, name)
-		if _, err := os.Stat(userPath); errors.Is(err, os.ErrNotExist) {
-			repoPath := filepath.Join(repoBase, name)
-			if b, rerr := os.ReadFile(repoPath); rerr == nil {
-				_ = os.WriteFile(userPath, b, 0o644)
-			} else {
-				// Fallback to empty file if repo template missing
+	entries, rdErr := os.ReadDir(repoBase)
+	if rdErr == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			name := e.Name()
+			userPath := filepath.Join(prompts, name)
+			needsSeed := false
+			if st, err := os.Stat(userPath); errors.Is(err, os.ErrNotExist) {
+				needsSeed = true
+			} else if err == nil && st.Size() == 0 {
+				needsSeed = true
+			}
+			if needsSeed {
+				repoPath := filepath.Join(repoBase, name)
+				if b, rerr := os.ReadFile(repoPath); rerr == nil {
+					_ = os.WriteFile(userPath, b, 0o644)
+				} else {
+					// Fallback to empty file if repo template missing
+					_ = os.WriteFile(userPath, []byte(""), 0o644)
+				}
+			}
+		}
+	} else {
+		// If reading repo prompts fails, still ensure known files exist as empty
+		fallback := []string{"pr_create.txt", "pr_update.txt", "ticket_update.txt", "ticket_edit.txt"}
+		for _, name := range fallback {
+			userPath := filepath.Join(prompts, name)
+			if st, err := os.Stat(userPath); errors.Is(err, os.ErrNotExist) || (err == nil && st.Size() == 0) {
 				_ = os.WriteFile(userPath, []byte(""), 0o644)
 			}
 		}
