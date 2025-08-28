@@ -204,12 +204,6 @@ make build
 noji --help
 ```
 
-## Roadmap ideas
-
-- Embed prompt templates via go:embed to guarantee seeding for globally installed binaries
-- `noji prompts check` to list present/missing prompt files
-- Richer help output with examples
-- Better preflight checks for dependencies (opencode/gh/git)
 
 ## License
 
