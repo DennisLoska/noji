@@ -49,35 +49,11 @@ noji pr update
 
 # update your ticket using the ticket prompt
 noji ticket update
+noji ticket edit $TICKET_ID
 
 # see PRs with reviews requested from you
 noji pr reviews --limit 5
 ```
-
-## Commands and examples
-
-- General
-  - `noji --help`
-  - `noji current` – print the currently selected model
-
-- Models
-  - `noji models` – list available opencode models
-  - `noji use <model>` – select and persist a default model
-
-- Pull requests
-  - `noji pr create` – create a PR description using your prompt template
-  - `noji pr update` – update the current PR description
-  - `noji pr edit` – open title/body in your editor (subcommands: `title`, `body`)
-  - `noji pr reviews` – list open PRs where your review is requested (alias: `r`)
-  - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
-
-- Tickets
-  - `noji ticket update` – craft an update for your tracker ticket
-  - `noji ticket edit <KEY>` – fetch, open, and update a ticket description (`--open` to launch browser)
-
-- Config
-  - `noji config path` – show config and prompts locations
-  - `noji config set-editor <editor>` – set preferred editor (e.g. vim, nvim, "code -w")
 
 ## Configuration
 
@@ -90,9 +66,6 @@ On every run, noji ensures the following exist (creating them if missing):
 
 - `config.yaml` – stores the selected model
 - `prompts/` directory with initial templates:
-  - `pr_create.txt`
-  - `pr_update.txt`
-  - `ticket_update.txt`
 
 User prompt files are never overwritten after creation. Edit them freely to customize instructions for your org/repo.
 
