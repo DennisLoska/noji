@@ -67,14 +67,17 @@ noji pr reviews --limit 5
 - Pull requests
   - `noji pr create` – create a PR description using your prompt template
   - `noji pr update` – update the current PR description
-  - `noji pr reviews` – list open PRs where your review is requested (uses gh)
+  - `noji pr edit` – open title/body in your editor (subcommands: `title`, `body`)
+  - `noji pr reviews` – list open PRs where your review is requested (alias: `r`)
   - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
 
 - Tickets
   - `noji ticket update` – craft an update for your tracker ticket
+  - `noji ticket edit <KEY>` – fetch, open, and update a ticket description (`--open` to launch browser)
 
 - Config
   - `noji config path` – show config and prompts locations
+  - `noji config set-editor <editor>` – set preferred editor (e.g. vim, nvim, "code -w")
 
 ## Configuration
 
