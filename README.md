@@ -83,34 +83,32 @@ A CLI to automate developer workflow tasks like creating/updating PRs and updati
 
 ## Installation
 
-Recommended: install via Makefile (embeds version from git)
-
 ```sh
-git clone https://github.com/DennisLoska/noji.git
-cd noji
+# install (embeds version/commit/date from git)
 make install
-# ensure $GOBIN or $GOPATH/bin is on PATH, then:
+
+# ensure your install path is on PATH
+export PATH="$(go env GOBIN 2>/dev/null || echo "$(go env GOPATH)/bin"):$PATH"
+
+# verify
 noji -v
 ```
 
-Install an exact release version
-
+Install a specific version
 ```sh
-git clone https://github.com/DennisLoska/noji.git
-cd noji
+git fetch --tags
 git checkout v0.1.0
 make install
-noji -v  # prints v0.1.0
+noji -v
 ```
 
-Alternatively, build a local binary without installing:
-
+Local build (no install)
 ```sh
 make build
 ./bin/noji -v
 ```
 
-Requirements: opencode CLI and GitHub CLI (gh) must be installed and available on PATH.
+Requirements: opencode CLI and GitHub CLI (gh) must be installed and on PATH.
 
 
 ## Quick start
