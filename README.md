@@ -2,84 +2,6 @@
 
 A CLI to automate developer workflow tasks like creating/updating PRs and updating ticket status, powered by opencode prompts.
 
-## Commands and examples
-
-- General
-  - `noji --help`
-  - `noji current` – print the currently selected model
-
-- Models
-  - `noji models` – list available opencode models
-    - Example:
-      ```sh
-      noji models
-      ```
-  - `noji use <model>` – select and persist a default model
-    - Example:
-      ```sh
-      noji use github-copilot/gpt-5
-      ```
-
-- Pull requests
-  - `noji pr create` – create a PR description using your prompt template
-    - Examples:
-      ```sh
-      noji pr create
-      ```
-  - `noji pr update` – update the current PR description
-    - Examples:
-      ```sh
-      noji pr update
-      ```
-   - `noji pr reviews` – list open PRs where your review is requested (uses gh)
-      - Flags:
-        - `--org <org>` filter by GitHub organization
-        - `--limit <n>` limit number of results (0=all)
-        - `--json` output raw JSON
-        - `--infer-orgs` infer orgs (default true when --org not provided)
-        - `--no-bots` exclude PRs from bot authors (default true)
-        - `--bots` only PRs from bot authors (overrides --no-bots)
-      - Examples:
-       ```sh
-       noji pr reviews
-       noji pr reviews --org your-org --limit 5
-       noji pr reviews --json
-       noji pr reviews --bots --limit 20
-       ```
-   - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
-      - Flags:
-        - `--repo OWNER/REPO` limit to a repo
-        - `--state open|closed|all` PR state (default open)
-        - `--drafts` include draft PRs (default true)
-        - `--no-bots` exclude bot comments (default true)
-        - `--limit <n>` limit number of PRs (0=all)
-        - `--since YYYY-MM-DD` only PRs updated on/after date
-        - `--json` output JSON
-        - `--classify` enable opencode-based severity classification and derived Priority
-        - `--md` render comment bodies as Markdown to ANSI (default true)
-      - Notes:
-        - Output shows only the raw PR URL line; no per-comment URLs. Markdown rendering uses a compact glamour theme.
-     - Examples:
-       ```sh
-       noji pr comments
-       noji pr comments --repo owner/repo --state open --no-bots --limit 20
-       noji pr comments --since 2025-07-28 --json
-       noji pr comments --classify
-       ```
-
-- Tickets
-  - `noji ticket update` – craft an update for your tracker ticket
-    - Example:
-      ```sh
-      noji ticket update
-      ```
-
-- Config
-  - `noji config path` – show config and prompts locations
-    - Example:
-      ```sh
-      noji config path
-      ```
 
 ## Installation
 
@@ -121,19 +43,38 @@ noji config path
 noji models
 noji use github-copilot/gpt-5
 
-# create a PR description using your prompt template text
+# create or update a PR description
 noji pr create
-
-# update PR description later
 noji pr update
 
 # update your ticket using the ticket prompt
 noji ticket update
 
 # see PRs with reviews requested from you
-noji pr reviews
-noji pr reviews --org your-org --limit 5
+noji pr reviews --limit 5
 ```
+
+## Commands and examples
+
+- General
+  - `noji --help`
+  - `noji current` – print the currently selected model
+
+- Models
+  - `noji models` – list available opencode models
+  - `noji use <model>` – select and persist a default model
+
+- Pull requests
+  - `noji pr create` – create a PR description using your prompt template
+  - `noji pr update` – update the current PR description
+  - `noji pr reviews` – list open PRs where your review is requested (uses gh)
+  - `noji pr comments` – list your PRs with human comments; optionally classify severity and priority
+
+- Tickets
+  - `noji ticket update` – craft an update for your tracker ticket
+
+- Config
+  - `noji config path` – show config and prompts locations
 
 ## Configuration
 
